@@ -3,7 +3,7 @@ import random
 import time
 
 import requests
-import ujson
+import json
 from bs4 import BeautifulSoup
 import pandas as pd
 import numpy as np
@@ -44,7 +44,7 @@ def load_data():
             # https://inshorts.com/api/en/search/trending_topics/business?page=4&type=NEWS_CATEGORY
             url = f'https://inshorts.com/api/en/search/trending_topics/{categoryIndex}?page={i}&type=NEWS_CATEGORY'
             response = requests.get(url)
-            data = ujson.loads(response.text)
+            data = json.loads(response.text)
 
             for news in data['data']['news_list']:
                 if 'news_obj' in news:
