@@ -11,6 +11,8 @@ import string
 from nltk.corpus import stopwords
 import unicodedata
 import nltk
+import easyocr
+from PIL import Image
 from nltk.tokenize import word_tokenize
 # %matplotlib inline
 
@@ -111,25 +113,37 @@ def remove_noise(string_input):
     return string_df
 
 def recommendNews(categories):
-    recommended_news = []
+    category_news = {}
     for category in categories:
-        title = []
-        categoryList = []
-        content = []
+        category_news[category] = []
+        for i in range(1, 3):  # Loop through pages
+            if len(category_news[category]) >= 5:
+                break  # Break if already have 5 news items
 
-        for i in range(1, 6):
-                url = f'https://inshorts.com/api/en/search/trending_topics/{category.lower()}?page={i}&type=NEWS_CATEGORY'
-                response = requests.get(url)
-                data = ujson.loads(response.text)
-                for news in data['data']['news_list']:
-                    if 'news_obj' in news:
-                        title.append(news['news_obj']['title'])
-                        categoryList.append(category.capitalize())
-                        content.append(news['news_obj']['content'])
-        df = pd.DataFrame({'title': title, 'category': category, 'content': content})
-           
-        filtered_df = df[df['category'] == category]
-        news_sample = filtered_df.sample(n=5, random_state=1)  # Randomly sample 5 news items
-        recommended_news.extend(news_sample.values.tolist())  # Add the sampled news items to the recommended_news list
-    random.shuffle(recommended_news)  # Shuffle the list of recommended news
-    return recommended_news[:5]  # Return only the first 5 news items
+            url = f'https://inshorts.com/api/en/search/trending_topics/{category.lower()}?page={i}&type=NEWS_CATEGORY'
+            response = requests.get(url)
+            data = ujson.loads(response.text)
+
+            for news in data['data']['news_list']:
+                if len(category_news[category]) >= 5:
+                    break  # Break if already have 5 news items
+
+                if 'news_obj' in news:
+                    news_title = news['news_obj']['title']
+                    news_url = news['news_obj'].get('source_url', 'URL not available')
+                    news_content = news['news_obj'].get('content', 'Content not available')
+                    category_news[category].append((news_title, news_url, news_content))
+
+    return category_news
+
+def imageDecode(image_data):
+    output_text = ''
+    reader = easyocr.Reader(['en'])
+    image_path = image_data
+    image = Image.open(image_path)
+    image_np = np.array(image)
+    result = reader.readtext(image_np)
+    for detection in result:
+        text = detection[1]
+        output_text += text + ' '
+    return output_text
