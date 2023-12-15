@@ -4,6 +4,7 @@ ujson
 beautifulsoup4
 pandas
 numpy
+pyperclip
 matplotlib
 seaborn
 nltk
